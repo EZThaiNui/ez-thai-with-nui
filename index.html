@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<meta name="description" content="EZ Thai with Khruu Nui — friendly Thai consonant flashcards, quizzes, tone training and writing practice for total beginners." />
+<meta name="theme-color" content="#7cc9f5" />
+<meta property="og:title" content="EZ Thai · Learn Thai Consonants with Khruu Nui" />
+<meta property="og:description" content="Beginner-friendly Thai alphabet learning: flashcards, quizzes, tones, writing and pronunciation." />
+<meta property="og:type" content="website" />
+<link rel="icon" type="image/png" href="/khruu-nui.png" />
+<title>EZ Thai · Learn Thai Consonants with Khruu Nui</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Mali:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<script>
+  // Set dark class BEFORE first paint to avoid flash
+  (function () {
+    try {
+      var saved = localStorage.getItem('ezthai-theme');
+      var prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var dark = saved ? saved === 'dark' : prefers;
+      if (dark) document.documentElement.classList.add('dark');
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

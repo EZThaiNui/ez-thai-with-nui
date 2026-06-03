@@ -1,0 +1,202 @@
+import React, { useRef, useState } from 'react';
+import { CLASS_STYLES } from '@/data/consonants';
+import { SFX } from '@/lib/sfx';
+
+// =====================================================================
+// Flashcard — click to flip. Shows letter on front,
+// full details + audio + image on back.
+// =====================================================================
+function Flashcard({ consonant, size = "normal" }) {
+  const [flipped, setFlipped] = useState(false);
+  const [audioState, setAudioState] = useState("idle"); // idle | playing | error
+  const audioRef = useRef(null);
+  const style = CLASS_STYLES[consonant.class];
+
+  const toggle = () => { setFlipped(f => !f); if (SFX) SFX.flip(); };
+
+  const handleKey = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggle();
+    }
+  };
+
+  const playAudio = (e) => {
+    e.stopPropagation();
+    if (SFX) SFX.click();
+    const url = consonant.audio;
+    // Graceful fallback when URL is still a placeholder
+    if (!url || url.includes("PASTE_")) {
+      // Use Web Speech as a stand-in until real audio is wired up
+      if ("speechSynthesis" in window) {
+        const u = new SpeechSynthesisUtterance(consonant.letter);
+        u.lang = "th-TH";
+        u.rate = 0.85;
+        setAudioState("playing");
+        u.onend = () => setAudioState("idle");
+        u.onerror = () => setAudioState("error");
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      }
+      return;
+    }
+    try {
+      if (!audioRef.current) audioRef.current = new Audio(url);
+      audioRef.current.currentTime = 0;
+      setAudioState("playing");
+      audioRef.current.play()
+        .then(() => {
+          audioRef.current.onended = () => setAudioState("idle");
+        })
+        .catch(() => setAudioState("error"));
+    } catch {
+      setAudioState("error");
+    }
+  };
+
+  const isPlaceholderImg = !consonant.image || consonant.image.includes("PASTE_");
+  const letterSize = size === "large" ? "text-[9rem] sm:text-[11rem]" : "text-7xl sm:text-8xl lg:text-9xl";
+  const cardHeight = size === "large" ? "h-[420px] sm:h-[480px]" : "h-[340px] sm:h-[380px]";
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={toggle}
+      onKeyDown={handleKey}
+      className={`flashcard-wrap ${cardHeight} cursor-pointer select-none outline-none focus-visible:ring-4`}
+      style={{ "--ring": style.ring }}
+    >
+      <div className={`flashcard-inner ${flipped ? "is-flipped" : ""}`}>
+        {/* ============ FRONT ============ */}
+        <div
+          className="flashcard-face flashcard-front"
+          style={{ background: style.bgFront, boxShadow: `0 10px 30px -12px ${style.ring}` }}
+        >
+          {/* class corner badge */}
+          <div
+            className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide"
+            style={{ background: style.badgeBg, color: style.badgeText }}
+          >
+            {style.label}
+          </div>
+
+          {/* tap hint */}
+          <div className="absolute top-3 right-3 text-[10px] uppercase tracking-[0.18em] text-slate-400 font-medium">
+            tap to flip
+          </div>
+
+          {/* big letter */}
+          <div className="flex-1 grid place-items-center w-full">
+            <span
+              className={`${letterSize} font-thai leading-none`}
+              style={{ color: style.accent, textShadow: `0 6px 0 ${style.bg}` }}
+            >
+              {consonant.letter}
+            </span>
+          </div>
+
+          {/* bottom hint dots */}
+          <div className="pb-4 flex gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+            <span className="h-1.5 w-6 rounded-full" style={{ background: style.accent }} />
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+          </div>
+        </div>
+
+        {/* ============ BACK ============ */}
+        <div
+          className="flashcard-face flashcard-back p-4 sm:p-5"
+          style={{ background: style.bg, boxShadow: `0 10px 30px -12px ${style.ring}` }}
+        >
+          <div className="flex items-start justify-between mb-2">
+            <span
+              className="px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide"
+              style={{ background: style.badgeBg, color: style.badgeText }}
+            >
+              {style.label}
+            </span>
+            <span className="text-4xl font-thai leading-none" style={{ color: style.accent }}>
+              {consonant.letter}
+            </span>
+          </div>
+
+          {/* image slot */}
+          <div
+            className="fc-image w-full h-32 sm:h-36 rounded-2xl overflow-hidden mb-3 flex items-center justify-center p-2"
+            style={{ background: "rgba(255,255,255,0.7)" }}
+          >
+            {isPlaceholderImg ? (
+              <div className="flex flex-col items-center gap-1 text-slate-500">
+                <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <circle cx="9" cy="11" r="1.5" />
+                  <path d="M21 17l-5-5-9 9" />
+                </svg>
+                <span className="text-[10px] font-mono uppercase tracking-wider">
+                  image of {consonant.meaning}
+                </span>
+              </div>
+            ) : (
+              <img
+                src={consonant.image}
+                alt={consonant.meaning}
+                className="max-w-full max-h-full object-contain"
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            )}
+          </div>
+
+          {/* info rows */}
+          <div className="space-y-1.5 text-left">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Name</div>
+              <div className="text-lg font-thai font-semibold text-slate-800 leading-tight">{consonant.name}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Romanization</div>
+                <div className="text-sm font-semibold text-slate-800 italic">{consonant.roman}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Sound</div>
+                <div className="text-sm font-semibold text-slate-800">/{consonant.sound}/</div>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">English meaning</div>
+              <div className="text-sm font-semibold text-slate-800 capitalize">{consonant.meaning}</div>
+            </div>
+          </div>
+
+          {/* play audio */}
+          <button
+            type="button"
+            onClick={playAudio}
+            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl font-semibold text-sm transition-transform active:scale-[0.97]"
+            style={{ background: style.accent, color: "#1e293b" }}
+          >
+            {audioState === "playing" ? (
+              <>
+                <svg viewBox="0 0 24 24" className="w-4 h-4 animate-pulse" fill="currentColor">
+                  <rect x="6" y="6" width="4" height="12" rx="1" />
+                  <rect x="14" y="6" width="4" height="12" rx="1" />
+                </svg>
+                Playing…
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                {audioState === "error" ? "Try again" : "Play sound"}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export { Flashcard };

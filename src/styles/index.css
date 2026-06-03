@@ -1,0 +1,303 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-blue: #7cc9f5;
+  --brand-orange: #ffbd59;
+}
+html, body, #root { height: 100%; }
+body {
+  font-family: 'Sarabun', system-ui, sans-serif;
+  color: #0f172a;
+  background: #fdf9f2;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.font-thai { font-family: 'Sarabun', 'Noto Sans Thai', sans-serif; font-weight: 700; }
+.font-mali { font-family: 'Mali', 'Noto Sans Thai', cursive; font-weight: 600; }
+
+/* ============ Dark mode ============ */
+html.dark body { background: #0b1220; color: #e2e8f0; }
+/* Surfaces */
+html.dark .bg-white            { background-color: #111a2e !important; }
+html.dark .bg-white\/85         { background-color: rgba(17,26,46,0.85) !important; }
+html.dark .bg-white\/75         { background-color: rgba(17,26,46,0.75) !important; }
+html.dark .bg-white\/70         { background-color: rgba(17,26,46,0.70) !important; }
+html.dark .bg-white\/60         { background-color: rgba(17,26,46,0.60) !important; }
+html.dark .bg-white\/55         { background-color: rgba(17,26,46,0.55) !important; }
+html.dark .bg-slate-50         { background-color: #0f1730 !important; }
+html.dark .bg-slate-100        { background-color: #1a2440 !important; }
+html.dark .bg-slate-100\/80     { background-color: rgba(26,36,64,0.8) !important; }
+html.dark .bg-white\/80         { background-color: rgba(17,26,46,0.80) !important; }
+html.dark .bg-slate-900        { background-color: #0a1226 !important; }
+/* Text */
+html.dark .text-slate-900      { color: #f8fafc !important; }
+html.dark .text-slate-800      { color: #f1f5f9 !important; }
+html.dark .text-slate-700      { color: #e2e8f0 !important; }
+html.dark .text-slate-600      { color: #e2e8f0 !important; }
+html.dark .text-slate-500      { color: #cbd5e1 !important; }
+html.dark .text-slate-400      { color: #cbd5e1 !important; }
+/* dark: text-* variants that were set too dim on dark surfaces — brighten */
+html.dark .dark\:text-slate-500 { color: #cbd5e1 !important; }
+html.dark .dark\:text-slate-400 { color: #cbd5e1 !important; }
+html.dark .text-white          { color: #f8fafc !important; }
+/* Borders */
+html.dark .border-slate-100    { border-color: rgba(148,163,184,0.18) !important; }
+html.dark .border-slate-200    { border-color: rgba(148,163,184,0.22) !important; }
+html.dark .border-slate-300    { border-color: rgba(148,163,184,0.28) !important; }
+html.dark .border-white        { border-color: rgba(148,163,184,0.20) !important; }
+html.dark .ring-white          { --tw-ring-color: rgba(148,163,184,0.30) !important; }
+/* Header blur */
+html.dark header.backdrop-blur-md { background-color: rgba(17,26,46,0.72) !important; }
+/* Inputs */
+html.dark input, html.dark textarea { background-color: #1a2440; color: #e2e8f0; }
+/* Hover surfaces */
+html.dark .hover\:bg-slate-50:hover  { background-color: #1a2440 !important; }
+html.dark .hover\:bg-slate-200:hover { background-color: #243154 !important; }
+/* Pastel class-card backgrounds stay legible — darken slightly */
+html.dark .bg-\[\#E6F4FE\]      { background-color: rgba(124,201,245,0.15) !important; }
+html.dark .bg-\[\#E3F6E8\]      { background-color: rgba(107,207,138,0.15) !important; }
+html.dark .bg-\[\#FFEFD6\]      { background-color: rgba(255,189,89,0.18) !important; }
+html.dark .bg-\[\#fff8ec\]      { background-color: rgba(255,189,89,0.10) !important; }
+
+/* ============ Flip card ============ */
+.flashcard-wrap {
+  perspective: 1200px;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.55s cubic-bezier(0.34, 1.2, 0.5, 1);
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  will-change: transform;
+}
+.flashcard-inner.is-flipped { transform: rotateY(180deg); }
+
+@media (hover: hover) {
+  .flashcard-wrap {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border-radius: 28px;
+  }
+  .flashcard-wrap:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 30px -16px rgba(124, 201, 245, 0.45);
+  }
+}
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateZ(0);
+}
+.flashcard-front {
+  justify-content: space-between;
+  padding-top: 8px;
+  transform: rotateY(0deg) translateZ(0);
+}
+.flashcard-back {
+  justify-content: flex-start;
+  align-items: stretch;
+  transform: rotateY(180deg) translateZ(0);
+}
+.flashcard-wrap:focus-visible { outline: none; }
+.flashcard-wrap:focus-visible .flashcard-face {
+  box-shadow: 0 0 0 4px var(--ring) !important;
+}
+
+/* ============ Quiz feedback animations ============ */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+.shake { animation: shake 0.5s ease-in-out; }
+
+@keyframes bounce-pop {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.15); }
+  60%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+.bounce-pop { animation: bounce-pop 0.6s ease-out; }
+
+@keyframes float-up {
+  0%   { transform: translateY(20px) scale(0.6); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translateY(-80px) scale(1.1); opacity: 0; }
+}
+.float-up { animation: float-up 1.2s ease-out forwards; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.25s ease-out; }
+
+/* ============ Tracing reveal animation ============ */
+@keyframes trace-reveal {
+  0%   { clip-path: inset(0 100% 0 0); opacity: 0.0; }
+  10%  { opacity: 0.8; }
+  100% { clip-path: inset(0 0 0 0); opacity: 0.45; }
+}
+.trace-anim { animation: trace-reveal 1.6s cubic-bezier(0.6, 0.05, 0.4, 1) both; }
+
+/* ============ Tone contour line "draw-in" ============ */
+@keyframes tone-draw {
+  from { stroke-dasharray: 200; stroke-dashoffset: 200; }
+  to   { stroke-dasharray: 200; stroke-dashoffset: 0; }
+}
+.tone-draw { animation: tone-draw 0.9s ease-out forwards; }
+
+/* ============ Start-here pulse on tracing ============ */
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.6); opacity: 0.55; }
+}
+.start-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+.start-here-wrap { animation: fade-in 0.4s ease-out; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .flashcard-inner, .bounce-pop, .float-up, .shake, .animate-fade-in,
+  .trace-anim, .tone-draw, .start-dot {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+::selection { background: rgba(255,189,89,0.4); }
+
+/* ============ Social hover glow ============ */
+.social-glow { position: relative; }
+.social-glow:hover {
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.5),
+    0 18px 35px -10px rgba(124,201,245,0.85);
+}
+.social-glow-ig:hover {
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.5),
+    0 18px 35px -10px rgba(221,42,123,0.75);
+}
+.social-glow-yt:hover {
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.5),
+    0 18px 35px -10px rgba(255,0,0,0.65);
+}
+
+/* ============ Graffiti / perfect-score celebration ============ */
+@keyframes graffiti-pop {
+  0%   { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+  50%  { transform: scale(1.15) rotate(2deg);  opacity: 1; }
+  100% { transform: scale(1) rotate(-3deg);    opacity: 1; }
+}
+@keyframes graffiti-pop-2 {
+  0%   { transform: scale(0.4) rotate(8deg);   opacity: 0; }
+  60%  { transform: scale(1.12) rotate(-2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(3deg);     opacity: 1; }
+}
+.graffiti {
+  display: inline-block;
+  font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.4rem, 7vw, 4.5rem);
+  line-height: 1;
+  margin: 0.1em 0;
+  background: linear-gradient(135deg, #ffbd59 0%, #ef4444 50%, #7cc9f5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(15,23,42,0.85);
+  text-shadow:
+    4px 4px 0 rgba(15,23,42,0.18),
+    -1px -1px 0 rgba(255,255,255,0.5);
+  transform-origin: center;
+}
+.graffiti-th { animation: graffiti-pop  0.6s cubic-bezier(0.34, 1.5, 0.4, 1) both; }
+.graffiti-en { animation: graffiti-pop-2 0.6s cubic-bezier(0.34, 1.5, 0.4, 1) 0.2s both; }
+
+/* ============ Extra dark mode readability overrides ============ */
+/* Make sure flashcard back text and labels are bright in dark mode */
+html.dark .flashcard-back { background-color: #131c33 !important; }
+html.dark .flashcard-back .text-slate-800 { color: #f1f5f9 !important; }
+html.dark .flashcard-back .text-slate-500 { color: #cbd5e1 !important; }
+html.dark .flashcard-back .text-slate-400 { color: #cbd5e1 !important; }
+/* Inputs & search */
+html.dark input::placeholder { color: #cbd5e1 !important; opacity: 1; }
+/* Soft warm card chrome — keep brand pastel feel in dark by tinting */
+html.dark .bg-\[\#fff8ec\] { background-color: rgba(255,189,89,0.10) !important; }
+/* Tone choice card text — ensure tone Thai labels stay legible */
+html.dark .text-\[\#0f172a\] { color: #f1f5f9 !important; }
+/* Brand-colored accent buttons keep their colors (we don't override
+   elements that use inline styles — those already pop on dark). */
+
+/* =====================================================================
+   DARK MODE ACCESSIBILITY PASS
+   The app uses many light pastel/gradient surfaces set via inline styles
+   (flashcard fronts, quiz tiles, feedback panels, the romanization pill).
+   In dark mode those surfaces stayed light while text was flipped light —
+   causing light-on-light. Below we darken those surfaces (winning over
+   inline styles with !important) and keep the bright accent letters/icons
+   for identity, so every surface is a dark card with bright text.
+   ===================================================================== */
+
+/* Stroke-guide colour flips light in dark so the outline stays visible. */
+:root      { --trace-guide: rgba(15,23,42,0.12); }
+html.dark  { --trace-guide: rgba(226,232,240,0.24); }
+
+/* Flashcard front: darken the near-white pastel; the coloured letter
+   + class badge carry the class identity. Kill the light text-shadow. */
+html.dark .flashcard-front { background-color: #16213c !important; }
+html.dark .flashcard-front > span,
+html.dark .flashcard-front .font-thai { text-shadow: none !important; }
+
+/* Image slot on the flashcard back. */
+html.dark .fc-image { background-color: #0e1730 !important; }
+
+/* Generic "this inline-light surface should be a dark card in dark mode". */
+html.dark .om-soft {
+  background-image: none !important;
+  background-color: #16213c !important;
+}
+/* A slightly warmer dark for celebration/result panels. */
+html.dark .om-warm {
+  background-image: none !important;
+  background-color: #1b2138 !important;
+}
+
+/* Romanization pill (Writing Practice) — was light orange + (flipped)
+   light text. Give it a deep amber so the bright text reads clearly. */
+html.dark .roman-pill { background-color: #3f3015 !important; }
+html.dark .roman-pill.text-slate-900 { color: #ffe9c2 !important; }
+
+/* Trace canvas: dark drawing surface with faint LIGHT gridlines so the
+   ghost letter + grid remain visible to trace over. */
+html.dark .trace-surface {
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(226,232,240,0.06) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(90deg, rgba(226,232,240,0.06) 0 1px, transparent 1px 32px) !important;
+  background-color: #141d33 !important;
+}
+html.dark .trace-cross  { background-color: rgba(226,232,240,0.12) !important; }
+html.dark .trace-ghost  { color: rgba(226,232,240,0.16) !important; }
+
+/* Coming-soon Simple Sentences hero — deep gradient instead of pastel. */
+html.dark .sentences-hero {
+  background-image: linear-gradient(135deg, #14223c 0%, #2a2114 100%) !important;
+}
