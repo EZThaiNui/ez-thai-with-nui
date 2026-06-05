@@ -122,7 +122,7 @@ function Navigation({ view, setView }) {
           <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl overflow-hidden shadow-md ring-2 ring-white"
                style={{ background: "#FFEFD6" }}>
             <img src="/khruu-nui.png" alt="Khruu Nui"
-                 className="w-full h-full object-cover object-top scale-[1.15]" />
+                 className="w-full h-full object-cover object-center scale-105" />
           </div>
           <div className="leading-tight text-left">
             <div className="font-extrabold text-slate-800 text-[15px] sm:text-base">EZ Thai</div>

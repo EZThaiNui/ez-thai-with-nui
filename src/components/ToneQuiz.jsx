@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SFX } from '@/lib/sfx';
+import { playClip } from '@/lib/audio';
 import { Confetti } from '@/components/Quiz';
 
 // =====================================================================
@@ -49,17 +50,14 @@ const TONES = [
 ];
 
 // Plays a tone — uses Cloudinary audio when present, falls back to synth.
+// Routes through the normalized player so tone loudness matches the rest
+// of the app (tones are our reference level, so they stay ~unchanged).
 function playTone(tone, slow = false) {
   const url = slow ? (tone.audioSlow || tone.audio) : tone.audio;
   if (url) {
-    try {
-      const a = new Audio(url);
-      a.playbackRate = slow && !tone.audioSlow ? 0.7 : 1.0;
-      a.play().catch(() => {
-        if (SFX) SFX.tone(tone.id);
-      });
-      return;
-    } catch (e) { /* fall through */ }
+    const rate = slow && !tone.audioSlow ? 0.7 : 1.0;
+    playClip(url, { rate }).catch(() => { if (SFX) SFX.tone(tone.id); });
+    return;
   }
   if (SFX) SFX.tone(tone.id);
 }
@@ -345,7 +343,10 @@ function ToneQuizResults({ score, total, wrong, onRestart, onExit }) {
                 </div>
                 <div className="h-12"><ToneContour tone={w.correct} color="#7cc9f5" /></div>
                 <div className="mt-2 text-xs text-slate-500">
-                  You picked: <span className="font-semibold text-rose-500">{w.picked.en}</span>
+                  You picked:{" "}
+                  <span className="font-semibold text-rose-500">
+                    {(w.picks || []).filter(p => p.id !== w.correct.id).map(p => p.en).join(", ") || "—"}
+                  </span>
                 </div>
               </div>
             ))}

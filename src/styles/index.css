@@ -301,3 +301,17 @@ html.dark .trace-ghost  { color: rgba(226,232,240,0.16) !important; }
 html.dark .sentences-hero {
   background-image: linear-gradient(135deg, #14223c 0%, #2a2114 100%) !important;
 }
+
+/* =====================================================================
+   WRITING PRACTICE — mobile ergonomics
+   - Shorter tracing canvas on phones (~30% less tall) so the page can be
+     scrolled past it and controls stay reachable.
+   - Sticky nav bar sits just under the app header with a soft divider.
+   ===================================================================== */
+.trace-canvas-box { height: min(42vh, 320px); }
+@media (min-width: 640px) {
+  .trace-canvas-box { height: min(58vh, 460px); }
+}
+
+.trace-stickybar { border-bottom: 1px solid rgba(15,23,42,0.06); }
+html.dark .trace-stickybar { border-bottom-color: rgba(226,232,240,0.10); }

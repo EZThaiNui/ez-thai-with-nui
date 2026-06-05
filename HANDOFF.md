@@ -31,6 +31,12 @@ The retired root preview was slightly ahead of `ez-thai/` and its approved chang
 - Bigger romanization display in the Tone quiz; Practice tab defaults to **Speak** first.
 - Cleaned up `sfx.js` (was mangled during the earlier port).
 
+### June 2026 — Mobile UX + audio pass
+- **Audio loudness normalization** — new `src/lib/audio.js` (`playClip`) routes every voice clip (flashcards, tones, speaking reference, and the user's own recording) through the Web Audio API, decoding once, measuring RMS, and applying a gain (with a peak limiter) to a single target loudness — tuned to the Practice-Tone level. Falls back to a plain `<audio>` element if decode/CORS fails. One clip plays at a time. All four components now call it instead of bare `new Audio()`.
+- **Flashcards** — front Thai letter enlarged (~7.5–10rem) to ~40% of card height; card tightened (h-300/360) so the character dominates and whitespace is reduced.
+- **Writing Practice** — controls reorganized for mobile: a **sticky bar** (Prev | letter+roman | Next, then Hear Sound + count) pins below the app header so you never scroll up to change letters; tracing canvas height cut ~30% on phones (`.trace-canvas-box`); **scroll-safe touch** — canvas uses `touch-action: pan-y` and a gesture discriminator so a mostly-vertical swipe scrolls the page while drags/curves draw (mouse still draws immediately).
+- **Tone review crash fixed** — results "You picked" now reads `w.picks` (was the undefined `w.picked`).
+
 ## 3. Completed features
 - **Flashcards** — all 44 consonants, flip animation, class filter, live search, hear-sound. Cloudinary images + audio wired.
 - **Quiz** — Consonant, Class, and Tone quizzes; length 5/10/20/44; retry-until-correct; scoring; perfect-score confetti; sound FX.
@@ -45,7 +51,6 @@ The retired root preview was slightly ahead of `ez-thai/` and its approved chang
 ## 4. Known bugs / gaps
 - **Stroke-order demo never plays** — `src/data/strokes.js` has `strokes: []` for all 44 letters. The demo engine + UI exist; just needs path data per letter.
 - **Speaking score is placeholder** — `scorePronunciation()` in `SpeakingPractice.jsx` is a loudness heuristic + random jitter, not real assessment.
-- **Tone review card** references `w.picked` which is undefined (the array is `w.picks`) — minor: the "You picked" line won't render the value. Pre-existing.
 - **"Notify me" button** on Simple Sentences does nothing (no email capture).
 
 ## 5. Pending improvements

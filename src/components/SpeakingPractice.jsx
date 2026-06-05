@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CLASS_STYLES } from '@/data/consonants';
 import { SFX } from '@/lib/sfx';
+import { playClip } from '@/lib/audio';
 
 // =====================================================================
 // Pronunciation Practice — record your voice, play it back, get a
@@ -142,7 +143,6 @@ function SpeakingPractice({ consonants }) {
     setRecording(false);
   };
 
-  const referenceAudioRef = useRef(null);
   const [refError, setRefError] = useState(null);
 
   const playReference = () => {
@@ -153,31 +153,16 @@ function SpeakingPractice({ consonants }) {
       setRefError("Reference audio not available for this letter yet.");
       return;
     }
-    try {
-      if (!referenceAudioRef.current || referenceAudioRef.current.dataset.url !== url) {
-        const a = new Audio(url);
-        a.dataset.url = url;
-        referenceAudioRef.current = a;
-      }
-      const audio = referenceAudioRef.current;
-      audio.currentTime = 0;
-      audio.play().catch(() => setRefError("Couldn't play the reference audio."));
-    } catch {
-      setRefError("Couldn't play the reference audio.");
-    }
+    // Normalized so the reference matches tone + speaking-playback loudness.
+    playClip(url).catch(() => setRefError("Couldn't play the reference audio."));
   };
 
-  const myAudioRef = useRef(null);
   const replayMine = () => {
     if (!audioUrl) return;
     if (SFX) SFX.click();
-    try {
-      if (!myAudioRef.current) myAudioRef.current = new Audio();
-      const a = myAudioRef.current;
-      if (a.src !== audioUrl) a.src = audioUrl;
-      a.currentTime = 0;
-      a.play().catch(() => {});
-    } catch { /* ignore */ }
+    // Normalize the user's own recording to the same target loudness, so
+    // "Yours" and "Reference" play back at a comparable level.
+    playClip(audioUrl).catch(() => {});
   };
 
   const next = () => {

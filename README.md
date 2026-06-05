@@ -79,5 +79,3 @@ No `vercel.json` is needed.
 
 Voice recordings and illustrations © Khruu Nui. Built with React, Vite, Tailwind
 CSS, and the Web Audio API.
-Test deploy June 4
-Trigger Vercel deploy

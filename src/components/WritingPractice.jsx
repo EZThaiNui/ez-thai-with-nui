@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CLASS_STYLES } from '@/data/consonants';
 import { STROKES } from '@/data/strokes';
 import { SFX } from '@/lib/sfx';
+import { playClip } from '@/lib/audio';
 
 // =====================================================================
 // Tracing Practice — two-phase: DEMO (watch stroke order) → TRACE.
@@ -74,15 +75,8 @@ function WritingPractice({ consonants }) {
       setAudioError("Audio not available");
       return;
     }
-    try {
-      if (!audioRef.current || audioRef.current.dataset.url !== url) {
-        const a = new Audio(url);
-        a.dataset.url = url;
-        audioRef.current = a;
-      }
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => setAudioError("Couldn't play"));
-    } catch { setAudioError("Couldn't play"); }
+    // Normalized playback so it matches tone + speaking loudness.
+    playClip(url).catch(() => setAudioError("Couldn't play"));
   };
 
   const next = () => { if (SFX) SFX.click(); setIdx(i => (i + 1) % list.length); };
@@ -125,44 +119,55 @@ function WritingPractice({ consonants }) {
 
       <div className="rounded-[28px] bg-white p-3 sm:p-4"
            style={{ boxShadow: `0 20px 50px -25px ${style.ring}` }}>
-        {/* Letter info + controls row — ABOVE the canvas */}
-        <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="om-soft w-11 h-11 rounded-2xl grid place-items-center font-mali text-2xl shrink-0"
-                 style={{ background: style.bg, color: style.accent }}>
-              {consonant.letter}
-            </div>
-            <div className="min-w-0">
-              <div className="font-mali font-bold text-slate-800 dark:text-slate-100 text-base leading-tight truncate">{consonant.name}</div>
-              {/* Romanization — prominent brand pill, high contrast */}
-              <div className="mt-1">
+        {/* STICKY nav bar — Prev | letter | Next + Hear Sound. Stays pinned
+            below the app header so you never scroll back up to change letters. */}
+        <div className="trace-stickybar sticky top-[92px] sm:top-[68px] z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 pt-1 pb-2 mb-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur rounded-t-[24px]">
+          <div className="flex items-center gap-2">
+            <button onClick={prev} aria-label="Previous letter"
+              className="shrink-0 w-11 h-11 grid place-items-center rounded-full bg-white border-2 border-slate-200 dark:bg-slate-700 dark:border-slate-600 text-lg font-bold text-slate-700 dark:text-slate-100 active:scale-95 transition-transform">
+              ←
+            </button>
+
+            <div className="flex-1 min-w-0 flex items-center justify-center gap-2">
+              <div className="om-soft w-11 h-11 rounded-2xl grid place-items-center font-mali text-2xl shrink-0"
+                   style={{ background: style.bg, color: style.accent }}>
+                {consonant.letter}
+              </div>
+              <div className="min-w-0 text-center">
+                <div className="font-mali font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base leading-tight truncate">{consonant.name}</div>
                 <span
-                  className="roman-pill inline-flex items-center px-2.5 py-0.5 rounded-full font-bold italic text-lg sm:text-xl text-slate-900"
+                  className="roman-pill inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full font-bold italic text-base sm:text-lg text-slate-900"
                   style={{ background: "#FFEFD6" }}>
                   {consonant.roman}
                 </span>
               </div>
+              <span
+                className="hidden sm:inline px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap"
+                style={{ background: style.badgeBg, color: style.badgeText }}>
+                {style.label}
+              </span>
             </div>
-            <span
-              className="px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ml-1 self-start mt-0.5"
-              style={{ background: style.badgeBg, color: style.badgeText }}>
-              {style.label}
-            </span>
+
+            <button onClick={next} aria-label="Next letter"
+              className="shrink-0 w-11 h-11 grid place-items-center rounded-full text-lg font-bold text-slate-900 shadow-md active:scale-95 transition-transform"
+              style={{ background: "#ffbd59" }}>
+              →
+            </button>
           </div>
 
-          {/* Primary actions */}
-          <div className="flex flex-wrap items-center gap-1.5 ml-auto">
+          <div className="mt-2 flex items-center justify-center gap-2">
             <button onClick={playSound}
-              className="flex items-center gap-1 px-3 py-2 rounded-full font-bold text-xs sm:text-sm text-slate-900 shadow active:scale-95 transition-all min-h-[40px]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-sm text-slate-900 shadow active:scale-95 transition-all min-h-[44px]"
               style={{ background: style.accent }}>
               🔊 Hear Sound
             </button>
             {hasStrokes && (
               <button onClick={replayDemo}
-                className="flex items-center gap-1 px-3 py-2 rounded-full bg-[#E6F4FE] text-[#0c4a6e] dark:bg-slate-700 dark:text-slate-100 font-bold text-xs sm:text-sm hover:bg-[#d4ecfc] active:scale-95 transition-all min-h-[40px]">
+                className="flex items-center gap-1 px-4 py-2 rounded-full bg-[#E6F4FE] text-[#0c4a6e] dark:bg-slate-700 dark:text-slate-100 font-bold text-sm active:scale-95 transition-all min-h-[44px]">
                 ▶ {phase === "demo" ? "Replay" : "Demo"}
               </button>
             )}
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold ml-1">{(idx % list.length) + 1}/{list.length}</span>
           </div>
         </div>
 
@@ -212,34 +217,21 @@ function WritingPractice({ consonants }) {
           />
         )}
 
-        {/* Bottom controls — speed (demo mode only), Prev/Next */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {hasStrokes && phase === "demo" && (
-            <div className="flex items-center gap-1 p-1 rounded-full bg-slate-100 dark:bg-slate-700">
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 px-2">Speed:</span>
-              {Object.entries(SPEED).map(([k, s]) => (
-                <button key={k} onClick={() => { setSpeed(k); setDemoKey(d => d + 1); }}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                    speed === k ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow" : "text-slate-600 dark:text-slate-300"
-                  }`}>
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="ml-auto flex items-center gap-2">
-            <button onClick={prev}
-              className="px-4 py-2 rounded-full bg-white border-2 border-slate-200 dark:bg-slate-700 dark:border-slate-600 font-bold text-sm text-slate-700 dark:text-slate-100 active:scale-95 transition-transform min-h-[40px]">
-              ← Prev
-            </button>
-            <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{(idx % list.length) + 1}/{list.length}</div>
-            <button onClick={next}
-              className="px-4 py-2 rounded-full font-bold text-sm text-slate-900 shadow-md active:scale-95 transition-transform min-h-[40px]"
-              style={{ background: "#ffbd59" }}>
-              Next →
-            </button>
+        {/* Bottom control — playback speed (demo mode only). Prev/Next now
+            live in the sticky bar above the canvas. */}
+        {hasStrokes && phase === "demo" && (
+          <div className="mt-3 flex items-center justify-center gap-1 p-1 rounded-full bg-slate-100 dark:bg-slate-700 w-max mx-auto">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300 px-2">Speed:</span>
+            {Object.entries(SPEED).map(([k, s]) => (
+              <button key={k} onClick={() => { setSpeed(k); setDemoKey(d => d + 1); }}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                  speed === k ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow" : "text-slate-600 dark:text-slate-300"
+                }`}>
+                {s.label}
+              </button>
+            ))}
           </div>
-        </div>
+        )}
         {audioError && (
           <div className="mt-2 text-xs text-rose-500 font-semibold">{audioError}</div>
         )}
@@ -451,6 +443,8 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
   const targetRef = useRef(null);
   const drawing = useRef(false);
   const lastPt = useRef(null);
+  const gestureRef = useRef("idle");   // idle | pending | draw | scroll
+  const startPtRef = useRef(null);
   const targetPixelsRef = useRef(0);
   const dprRef = useRef(1);
 
@@ -526,17 +520,8 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
     return { x: pt.clientX - rect.left, y: pt.clientY - rect.top };
   };
 
-  const start = (e) => {
-    e.preventDefault();
-    drawing.current = true;
-    lastPt.current = getPos(e);
-    if (SFX) SFX.click();
-  };
-  const move = (e) => {
-    if (!drawing.current) return;
-    e.preventDefault();
+  const drawSegment = (pt) => {
     const ctx = drawRef.current.getContext("2d");
-    const pt = getPos(e);
     ctx.strokeStyle = style.accent;
     ctx.lineWidth = 16;
     ctx.beginPath();
@@ -545,7 +530,8 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
     ctx.stroke();
     lastPt.current = pt;
   };
-  const end = () => {
+
+  const finishStroke = () => {
     if (!drawing.current) return;
     drawing.current = false;
     lastPt.current = null;
@@ -555,6 +541,60 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
       setCelebrated(true);
       if (SFX) SFX.reward();
     }
+  };
+
+  // ---- Mouse: draw immediately (desktop has no scroll conflict) ----
+  const mouseDown = (e) => {
+    e.preventDefault();
+    drawing.current = true;
+    lastPt.current = getPos(e);
+    if (SFX) SFX.click();
+  };
+  const mouseMove = (e) => {
+    if (!drawing.current) return;
+    drawSegment(getPos(e));
+  };
+  const mouseUp = () => finishStroke();
+
+  // ---- Touch: discriminate scroll vs draw so the PAGE can still scroll ----
+  // We don't start drawing on touchstart. On the first meaningful move we
+  // decide: a mostly-vertical swipe is a SCROLL (we let the browser handle
+  // it — touch-action: pan-y), anything else is a DRAW. If the browser has
+  // already claimed the gesture for scrolling, its moves arrive
+  // non-cancelable, which we treat as a scroll too.
+  const touchStart = (e) => {
+    const pt = getPos(e);
+    startPtRef.current = pt;
+    lastPt.current = pt;
+    gestureRef.current = "pending";
+  };
+  const touchMove = (e) => {
+    if (gestureRef.current === "scroll") return;
+    if (e.cancelable === false) { gestureRef.current = "scroll"; return; }
+    const pt = getPos(e);
+    if (gestureRef.current === "pending") {
+      const dx = pt.x - startPtRef.current.x;
+      const dy = pt.y - startPtRef.current.y;
+      if (Math.hypot(dx, dy) < 8) return;          // wait for clear intent
+      if (Math.abs(dy) > Math.abs(dx) * 1.4) {     // mostly vertical → scroll
+        gestureRef.current = "scroll";
+        return;
+      }
+      gestureRef.current = "draw";
+      drawing.current = true;
+      if (SFX) SFX.click();
+      lastPt.current = startPtRef.current;
+    }
+    if (gestureRef.current === "draw") {
+      e.preventDefault();
+      drawSegment(pt);
+    }
+  };
+  const touchEnd = () => {
+    if (gestureRef.current === "draw") finishStroke();
+    gestureRef.current = "idle";
+    drawing.current = false;
+    lastPt.current = null;
   };
 
   const clear = () => {
@@ -576,9 +616,8 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
   return (
     <>
       <div
-        className="trace-surface relative w-full rounded-3xl overflow-hidden touch-none"
+        className="trace-surface trace-canvas-box relative w-full rounded-3xl overflow-hidden"
         style={{
-          height: "min(60vh, 460px)",
           background:
             "repeating-linear-gradient(0deg, rgba(15,23,42,0.04) 0 1px, transparent 1px 32px), " +
             "repeating-linear-gradient(90deg, rgba(15,23,42,0.04) 0 1px, transparent 1px 32px), " +
@@ -604,8 +643,9 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
         <canvas
           ref={drawRef}
           className="absolute inset-0 w-full h-full cursor-crosshair"
-          onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
-          onTouchStart={start} onTouchMove={move} onTouchEnd={end}
+          style={{ touchAction: "pan-y" }}
+          onMouseDown={mouseDown} onMouseMove={mouseMove} onMouseUp={mouseUp} onMouseLeave={mouseUp}
+          onTouchStart={touchStart} onTouchMove={touchMove} onTouchEnd={touchEnd} onTouchCancel={touchEnd}
         />
         {celebrated && (
           <div className="absolute inset-0 pointer-events-none grid place-items-center">
@@ -633,6 +673,10 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
           {tier.msg}
         </div>
       )}
+      {/* Mobile hint: how touch is interpreted, so scrolling feels natural */}
+      <div className="sm:hidden mt-1 text-[11px] text-slate-400 dark:text-slate-500 text-center">
+        Drag to trace · swipe up/down to scroll
+      </div>
     </>
   );
 }

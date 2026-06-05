@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { CLASS_STYLES } from '@/data/consonants';
 import { SFX } from '@/lib/sfx';
+import { playClip } from '@/lib/audio';
 
 // =====================================================================
 // Flashcard — click to flip. Shows letter on front,
@@ -9,7 +10,6 @@ import { SFX } from '@/lib/sfx';
 function Flashcard({ consonant, size = "normal" }) {
   const [flipped, setFlipped] = useState(false);
   const [audioState, setAudioState] = useState("idle"); // idle | playing | error
-  const audioRef = useRef(null);
   const style = CLASS_STYLES[consonant.class];
 
   const toggle = () => { setFlipped(f => !f); if (SFX) SFX.flip(); };
@@ -40,23 +40,17 @@ function Flashcard({ consonant, size = "normal" }) {
       }
       return;
     }
-    try {
-      if (!audioRef.current) audioRef.current = new Audio(url);
-      audioRef.current.currentTime = 0;
-      setAudioState("playing");
-      audioRef.current.play()
-        .then(() => {
-          audioRef.current.onended = () => setAudioState("idle");
-        })
-        .catch(() => setAudioState("error"));
-    } catch {
-      setAudioState("error");
-    }
+    // Normalized playback so every letter sounds as loud as the tones.
+    setAudioState("playing");
+    playClip(url, { onended: () => setAudioState("idle") })
+      .catch(() => setAudioState("error"));
   };
 
   const isPlaceholderImg = !consonant.image || consonant.image.includes("PASTE_");
-  const letterSize = size === "large" ? "text-[9rem] sm:text-[11rem]" : "text-7xl sm:text-8xl lg:text-9xl";
-  const cardHeight = size === "large" ? "h-[420px] sm:h-[480px]" : "h-[340px] sm:h-[380px]";
+  // Letter dominates the card (~40% of card height). Enlarged ~55-65% vs the
+  // previous sizing so the character is readable at arm's length on a phone.
+  const letterSize = size === "large" ? "text-[12rem] sm:text-[14rem]" : "text-[7.5rem] sm:text-[9rem] lg:text-[10rem]";
+  const cardHeight = size === "large" ? "h-[420px] sm:h-[480px]" : "h-[300px] sm:h-[360px]";
 
   return (
     <div
