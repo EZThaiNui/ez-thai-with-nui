@@ -26,8 +26,9 @@ function buildConsonantQuestion(pool) {
   const consonant = pool[Math.floor(Math.random() * pool.length)];
   const correct = consonant.roman;
   const others = pool.filter(c => c.roman !== correct);
-  const distractors = shuffle(others).slice(0, 3).map(c => c.roman);
-  while (distractors.length < 3) {
+  // 2 distractors + 1 correct = 3 choices (easier to read on mobile).
+  const distractors = shuffle(others).slice(0, 2).map(c => c.roman);
+  while (distractors.length < 2) {
     const cand = shuffle(pool)[0].roman;
     if (cand !== correct && !distractors.includes(cand)) distractors.push(cand);
   }
@@ -147,13 +148,27 @@ function Quiz({ consonants, totalQuestions = 10, kind = "consonant", onExit }) {
           <div className="text-xs uppercase tracking-[0.22em] text-slate-400 font-semibold mb-2">
             {kind === "class" ? "Which class is this consonant?" : "How do you say this letter?"}
           </div>
-          <div className="om-soft mx-auto w-32 h-32 sm:w-40 sm:h-40 rounded-3xl grid place-items-center"
-               style={{ background: style.bgFront, boxShadow: `inset 0 0 0 6px ${style.bg}` }}>
-            <span className={`font-thai text-[6rem] sm:text-[8rem] leading-none ${isCorrectPicked ? "bounce-pop" : ""}`}
-                  style={{ color: style.accent }}>
-              {q.consonant.letter}
-            </span>
-          </div>
+          {/* In the CLASS quiz, the prompt must NOT use class colors — that
+              would give away the answer. Show a neutral letter (black in
+              light, white in dark) and neutral box until the student answers
+              correctly; only then reveal the class color. The consonant
+              (romanization) quiz keeps its colored letter. */}
+          {(() => {
+            const isClass = kind === "class";
+            const reveal = !isClass || isCorrectPicked;
+            return (
+              <div className="om-soft mx-auto w-32 h-32 sm:w-40 sm:h-40 rounded-3xl grid place-items-center"
+                   style={{
+                     background: reveal ? style.bgFront : "#f1f5f9",
+                     boxShadow: `inset 0 0 0 6px ${reveal ? style.bg : "#e2e8f0"}`
+                   }}>
+                <span className={`font-thai text-[6rem] sm:text-[8rem] leading-none ${isCorrectPicked ? "bounce-pop" : ""} ${reveal ? "" : "text-slate-900 dark:text-white"}`}
+                      style={reveal ? { color: style.accent } : undefined}>
+                  {q.consonant.letter}
+                </span>
+              </div>
+            );
+          })()}
           {isCorrectPicked && (
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
               <span className="text-5xl float-up">🎉</span>
@@ -163,7 +178,7 @@ function Quiz({ consonants, totalQuestions = 10, kind = "consonant", onExit }) {
       </div>
 
       {/* Choices */}
-      <div className={`grid gap-3 ${kind === "class" ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
         {q.choices.map((choice, i) => {
           const wasPicked = picks.includes(choice);
           const isCorrectChoice = choice === q.correct;

@@ -50,7 +50,7 @@ function Flashcard({ consonant, size = "normal" }) {
   // Letter dominates the card (~40% of card height). Enlarged ~55-65% vs the
   // previous sizing so the character is readable at arm's length on a phone.
   const letterSize = size === "large" ? "text-[12rem] sm:text-[14rem]" : "text-[7.5rem] sm:text-[9rem] lg:text-[10rem]";
-  const cardHeight = size === "large" ? "h-[420px] sm:h-[480px]" : "h-[300px] sm:h-[360px]";
+  const cardHeight = size === "large" ? "h-[420px] sm:h-[480px]" : "h-[400px] sm:h-[460px]";
 
   return (
     <div
@@ -103,26 +103,28 @@ function Flashcard({ consonant, size = "normal" }) {
           className="flashcard-face flashcard-back p-4 sm:p-5"
           style={{ background: style.bg, boxShadow: `0 10px 30px -12px ${style.ring}` }}
         >
-          <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center justify-between mb-2">
             <span
               className="px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide"
               style={{ background: style.badgeBg, color: style.badgeText }}
             >
               {style.label}
             </span>
-            <span className="text-4xl font-thai leading-none" style={{ color: style.accent }}>
+            <span className="text-3xl font-thai leading-none" style={{ color: style.accent }}>
               {consonant.letter}
             </span>
           </div>
 
-          {/* image slot */}
+          {/* image slot — its OWN large square/rounded area with a guaranteed
+              minimum height so the picture is obvious on mobile (≥150px on
+              iPhone) and still grows to fill any extra space. */}
           <div
-            className="fc-image w-full h-32 sm:h-36 rounded-2xl overflow-hidden mb-3 flex items-center justify-center p-2"
+            className="fc-image w-full flex-1 min-h-[150px] sm:min-h-[170px] rounded-2xl overflow-hidden mb-2.5 flex items-center justify-center p-2"
             style={{ background: "rgba(255,255,255,0.7)" }}
           >
             {isPlaceholderImg ? (
               <div className="flex flex-col items-center gap-1 text-slate-500">
-                <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg viewBox="0 0 24 24" className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <rect x="3" y="5" width="18" height="14" rx="2" />
                   <circle cx="9" cy="11" r="1.5" />
                   <path d="M21 17l-5-5-9 9" />
@@ -135,31 +137,31 @@ function Flashcard({ consonant, size = "normal" }) {
               <img
                 src={consonant.image}
                 alt={consonant.meaning}
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain"
                 onError={(e) => { e.target.style.display = "none"; }}
               />
             )}
           </div>
 
-          {/* info rows */}
-          <div className="space-y-1.5 text-left">
-            <div>
+          {/* info rows — compact so the image gets the room */}
+          <div className="space-y-0.5 text-left">
+            <div className="flex items-baseline justify-between gap-2">
               <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Name</div>
-              <div className="text-lg font-thai font-semibold text-slate-800 leading-tight">{consonant.name}</div>
+              <div className="text-base font-thai font-semibold text-slate-800 leading-tight truncate">{consonant.name}</div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Romanization</div>
-                <div className="text-sm font-semibold text-slate-800 italic">{consonant.roman}</div>
+              <div className="flex items-baseline gap-1.5">
+                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Rom.</div>
+                <div className="text-sm font-semibold text-slate-800 italic truncate">{consonant.roman}</div>
               </div>
-              <div>
+              <div className="flex items-baseline gap-1.5 justify-end">
                 <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Sound</div>
-                <div className="text-sm font-semibold text-slate-800">/{consonant.sound}/</div>
+                <div className="text-sm font-semibold text-slate-800 truncate">/{consonant.sound}/</div>
               </div>
             </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">English meaning</div>
-              <div className="text-sm font-semibold text-slate-800 capitalize">{consonant.meaning}</div>
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold whitespace-nowrap">Meaning</div>
+              <div className="text-sm font-semibold text-slate-800 capitalize truncate">{consonant.meaning}</div>
             </div>
           </div>
 
@@ -167,7 +169,7 @@ function Flashcard({ consonant, size = "normal" }) {
           <button
             type="button"
             onClick={playAudio}
-            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl font-semibold text-sm transition-transform active:scale-[0.97]"
+            className="mt-2.5 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl font-semibold text-sm transition-transform active:scale-[0.97]"
             style={{ background: style.accent, color: "#1e293b" }}
           >
             {audioState === "playing" ? (

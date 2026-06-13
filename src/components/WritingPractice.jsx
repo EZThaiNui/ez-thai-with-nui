@@ -443,8 +443,6 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
   const targetRef = useRef(null);
   const drawing = useRef(false);
   const lastPt = useRef(null);
-  const gestureRef = useRef("idle");   // idle | pending | draw | scroll
-  const startPtRef = useRef(null);
   const targetPixelsRef = useRef(0);
   const dprRef = useRef(1);
 
@@ -556,46 +554,22 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
   };
   const mouseUp = () => finishStroke();
 
-  // ---- Touch: discriminate scroll vs draw so the PAGE can still scroll ----
-  // We don't start drawing on touchstart. On the first meaningful move we
-  // decide: a mostly-vertical swipe is a SCROLL (we let the browser handle
-  // it — touch-action: pan-y), anything else is a DRAW. If the browser has
-  // already claimed the gesture for scrolling, its moves arrive
-  // non-cancelable, which we treat as a scroll too.
+  // ---- Touch: drawing always wins INSIDE the canvas. `touch-action: none`
+  // on the element means a gesture that STARTS on the canvas never scrolls
+  // the page — so every direction draws, including vertical strokes. Page
+  // scrolling happens only when the touch starts outside the canvas. ----
   const touchStart = (e) => {
-    const pt = getPos(e);
-    startPtRef.current = pt;
-    lastPt.current = pt;
-    gestureRef.current = "pending";
+    e.preventDefault();
+    drawing.current = true;
+    lastPt.current = getPos(e);
+    if (SFX) SFX.click();
   };
   const touchMove = (e) => {
-    if (gestureRef.current === "scroll") return;
-    if (e.cancelable === false) { gestureRef.current = "scroll"; return; }
-    const pt = getPos(e);
-    if (gestureRef.current === "pending") {
-      const dx = pt.x - startPtRef.current.x;
-      const dy = pt.y - startPtRef.current.y;
-      if (Math.hypot(dx, dy) < 8) return;          // wait for clear intent
-      if (Math.abs(dy) > Math.abs(dx) * 1.4) {     // mostly vertical → scroll
-        gestureRef.current = "scroll";
-        return;
-      }
-      gestureRef.current = "draw";
-      drawing.current = true;
-      if (SFX) SFX.click();
-      lastPt.current = startPtRef.current;
-    }
-    if (gestureRef.current === "draw") {
-      e.preventDefault();
-      drawSegment(pt);
-    }
+    if (!drawing.current) return;
+    e.preventDefault();
+    drawSegment(getPos(e));
   };
-  const touchEnd = () => {
-    if (gestureRef.current === "draw") finishStroke();
-    gestureRef.current = "idle";
-    drawing.current = false;
-    lastPt.current = null;
-  };
+  const touchEnd = () => finishStroke();
 
   const clear = () => {
     const dc = drawRef.current;
@@ -643,7 +617,7 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
         <canvas
           ref={drawRef}
           className="absolute inset-0 w-full h-full cursor-crosshair"
-          style={{ touchAction: "pan-y" }}
+          style={{ touchAction: "none" }}
           onMouseDown={mouseDown} onMouseMove={mouseMove} onMouseUp={mouseUp} onMouseLeave={mouseUp}
           onTouchStart={touchStart} onTouchMove={touchMove} onTouchEnd={touchEnd} onTouchCancel={touchEnd}
         />
@@ -673,9 +647,9 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
           {tier.msg}
         </div>
       )}
-      {/* Mobile hint: how touch is interpreted, so scrolling feels natural */}
+      {/* Mobile hint: drawing always wins inside the box; scroll from outside */}
       <div className="sm:hidden mt-1 text-[11px] text-slate-400 dark:text-slate-500 text-center">
-        Drag to trace · swipe up/down to scroll
+        Draw inside the box · scroll from outside it
       </div>
     </>
   );
