@@ -554,10 +554,14 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
   };
   const mouseUp = () => finishStroke();
 
-  // ---- Touch: drawing always wins INSIDE the canvas. `touch-action: none`
-  // on the element means a gesture that STARTS on the canvas never scrolls
-  // the page — so every direction draws, including vertical strokes. Page
-  // scrolling happens only when the touch starts outside the canvas. ----
+  // ---- Touch: drawing always wins INSIDE the canvas. These handlers are
+  // attached as NON-PASSIVE native listeners (see effect below) so that
+  // e.preventDefault() actually suppresses iOS Safari's page scroll while
+  // drawing. (React's synthetic onTouch* listeners are passive, so calling
+  // preventDefault there is ignored on iOS — which is why the page used to
+  // scroll mid-stroke.) `touch-action: none` on the canvas is the companion
+  // hint. Scrolling still works normally when the touch starts OUTSIDE the
+  // canvas, because these listeners live only on the drawing surface. ----
   const touchStart = (e) => {
     e.preventDefault();
     drawing.current = true;
@@ -570,6 +574,31 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
     drawSegment(getPos(e));
   };
   const touchEnd = () => finishStroke();
+
+  // Keep the active handlers in refs so the once-attached native listeners
+  // always call the latest closures (current letter colour, celebrated, …).
+  const tStartRef = useRef(touchStart); tStartRef.current = touchStart;
+  const tMoveRef  = useRef(touchMove);  tMoveRef.current  = touchMove;
+  const tEndRef   = useRef(touchEnd);   tEndRef.current   = touchEnd;
+
+  useEffect(() => {
+    const el = drawRef.current;
+    if (!el) return;
+    const ts = (e) => tStartRef.current(e);
+    const tm = (e) => tMoveRef.current(e);
+    const te = (e) => tEndRef.current(e);
+    // passive:false is the crucial bit — it lets preventDefault() stop scroll.
+    el.addEventListener("touchstart",  ts, { passive: false });
+    el.addEventListener("touchmove",   tm, { passive: false });
+    el.addEventListener("touchend",    te, { passive: false });
+    el.addEventListener("touchcancel", te, { passive: false });
+    return () => {
+      el.removeEventListener("touchstart",  ts);
+      el.removeEventListener("touchmove",   tm);
+      el.removeEventListener("touchend",    te);
+      el.removeEventListener("touchcancel", te);
+    };
+  }, []);
 
   const clear = () => {
     const dc = drawRef.current;
@@ -619,7 +648,6 @@ function TraceCanvas({ consonant, style, coverage, setCoverage, celebrated, setC
           className="absolute inset-0 w-full h-full cursor-crosshair"
           style={{ touchAction: "none" }}
           onMouseDown={mouseDown} onMouseMove={mouseMove} onMouseUp={mouseUp} onMouseLeave={mouseUp}
-          onTouchStart={touchStart} onTouchMove={touchMove} onTouchEnd={touchEnd} onTouchCancel={touchEnd}
         />
         {celebrated && (
           <div className="absolute inset-0 pointer-events-none grid place-items-center">
